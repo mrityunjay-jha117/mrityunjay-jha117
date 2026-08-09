@@ -1,0 +1,14 @@
+name: Debug Secrets
+on: push
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          if [ -z "${{ secrets.GH_PAT }}" ]; then
+            echo "GH_PAT is empty"
+          else
+            echo "GH_PAT is set, length: ${#GH_PAT}"
+          fi
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
