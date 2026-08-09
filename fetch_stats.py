@@ -63,37 +63,66 @@ def fetch_github_stats(token, username):
         return None
 
     followers = user_data.get('followers', {}).get('totalCount', 0)
-    repos = user_data.get('repositories', {}).get('totalCount', 0)
+    repos_count = user_data.get('repositories', {}).get('totalCount', 0)
     
     total_stars = 0
     total_commits = user_data.get('contributionsCollection', {}).get('totalCommitContributions', 0)
     
-    # We will estimate LOC since accurate Additions/Deletions require per-commit fetching which is too heavy
-    # Many profiles estimate it by byte size of languages.
-    # 1 byte ~ 1 character, avg line length ~ 30 characters
-    total_loc = 0
+    import time
     
-    for repo in user_data.get('repositories', {}).get('nodes', []):
-        total_stars += repo.get('stargazers', {}).get('totalCount', 0)
-        for lang in repo.get('languages', {}).get('edges', []):
-            total_loc += (lang.get('size', 0) // 30)
+    total_additions = 0
+    total_removals = 0
+    
+    rest_headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github.v3+json"
+    }
 
-    # Simple heuristic for Additions/Removals if we can't fetch them exactly
-    # We will just set them relative to LOC to have a cool display.
-    # In a perfect world we would hit the GitHub REST API /repos/{owner}/{repo}/stats/contributors
-    # but that often returns 202 Accepted and requires polling.
-    
-    additions = total_loc + int(total_loc * 0.2)
-    removals = int(total_loc * 0.2)
+    repos_nodes = user_data.get('repositories', {}).get('nodes', [])
+    for repo in repos_nodes:
+        total_stars += repo.get('stargazers', {}).get('totalCount', 0)
+        repo_name = repo.get('name')
+        
+        # Hit the contributors stats API
+        stats_url = f"https://api.github.com/repos/{username}/{repo_name}/stats/contributors"
+        req = urllib.request.Request(stats_url, headers=rest_headers)
+        
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                with urllib.request.urlopen(req) as response:
+                    status_code = response.getcode()
+                    if status_code == 202:
+                        time.sleep(2)
+                        continue
+                    elif status_code == 200:
+                        stats_data = json.loads(response.read().decode())
+                        if isinstance(stats_data, list):
+                            for contributor in stats_data:
+                                author = contributor.get('author')
+                                if author and author.get('login', '').lower() == username.lower():
+                                    for week in contributor.get('weeks', []):
+                                        total_additions += week.get('a', 0)
+                                        total_removals += week.get('d', 0)
+                        break
+                    else:
+                        break
+            except urllib.error.URLError as e:
+                print(f"Error fetching stats for {repo_name}: {e}")
+                break
+
+    total_loc = total_additions - total_removals
+    if total_loc < 0:
+        total_loc = 0
 
     return {
         "followers": followers,
         "stars": total_stars,
-        "repos": repos,
+        "repos": repos_count,
         "commits": total_commits,
         "loc": total_loc,
-        "additions": additions,
-        "removals": removals
+        "additions": total_additions,
+        "removals": total_removals
     }
 
 def main():
