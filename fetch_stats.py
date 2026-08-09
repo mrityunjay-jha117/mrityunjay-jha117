@@ -78,9 +78,11 @@ def fetch_github_stats(token, username):
             
             try:
                 # Fast bare clone
+                env = os.environ.copy()
+                env["GIT_TERMINAL_PROMPT"] = "0"
                 subprocess.run(
                     ["git", "clone", "--bare", "--filter=blob:none", clone_url, repo_dir],
-                    check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                    check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=env, timeout=60
                 )
                 
                 # We count all commits globally matching user's names
