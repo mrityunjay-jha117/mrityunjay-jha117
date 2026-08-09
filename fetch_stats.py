@@ -17,24 +17,11 @@ def fetch_github_stats(token, username):
     query($login: String!) {
       user(login: $login) {
         followers { totalCount }
-        repositories(first: 100, ownerAffiliations: [OWNER], orderBy: {field: PUSHED_AT, direction: DESC}) {
+        repositories(first: 100, ownerAffiliations: [OWNER]) {
           totalCount
           nodes {
             name
             stargazers { totalCount }
-            defaultBranchRef {
-              target {
-                ... on Commit {
-                  history(author: {id: ""}) {
-                    totalCount
-                  }
-                }
-              }
-            }
-            languages(first: 10, orderBy: {field: SIZE, direction: DESC}) {
-              edges {
-                size
-                node { name }
             url
           }
         }
