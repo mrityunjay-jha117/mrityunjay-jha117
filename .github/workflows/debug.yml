@@ -3,12 +3,20 @@ on: push
 jobs:
   debug:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
+      - uses: actions/checkout@v3
       - run: |
           if [ -z "${{ secrets.GH_PAT }}" ]; then
-            echo "GH_PAT is empty"
+            echo "GH_PAT is empty" > debug.txt
           else
-            echo "GH_PAT is set, length: ${#GH_PAT}"
+            echo "GH_PAT is set, length: ${#GH_PAT}" > debug.txt
           fi
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add debug.txt
+          git commit -m "Debug secret"
+          git push
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
