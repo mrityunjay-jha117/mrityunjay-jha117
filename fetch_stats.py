@@ -54,6 +54,7 @@ def fetch_github_stats(token, username):
 
     user_data = result.get('data', {}).get('user', {})
     if not user_data:
+        print("GraphQL returned empty user data:", json.dumps(result, indent=2))
         return None
 
     followers = user_data.get('followers', {}).get('totalCount', 0)
