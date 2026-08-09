@@ -1,0 +1,68 @@
+{
+  "resume_details": {
+    "name": "Mrityunjay Jha",
+    "contact": {
+      "email": "mrityunjay.jha2005@gmail.com",
+      "linkedin": "mrityunjay-jha-7b0436303",
+      "LeetCode": "/idk_the_answer",
+      "Codeforces": "/silent_cartographer"
+    },
+    "github_stats": {
+      "username": "mrityunjay-jha117",
+      "repos": 10,
+      "commits": 529,
+      "additions": "12,450",
+      "removals": "3,120",
+      "loc": "9,330"
+    },
+    "education": [
+      {
+        "institution": "Delhi College of Engineering",
+        "degree": "B.TECH | CSE-27"
+      }
+    ],
+    "experience": [
+      {
+        "company": "QuickIntell, Remote",
+        "role": "Software Engineer Intern",
+        "duration": "Jun 2026 - Jul 2026"
+      }
+    ],
+    "technical_skills": {
+      "languages": [
+        "C/C++",
+        "Python",
+        "JavaScript",
+        "TypeScript",
+        "Bash"
+      ],
+      "Web Development": [
+        "React.js",
+        "Node.js",
+        "Express.js",
+        "REST APIs",
+        "WebSockets"
+      ],
+      "databases_and_orm": [
+        "PostgreSQL",
+        "MongoDB",
+        "MySQL",
+        "Prisma",
+        "ChromaDB"
+      ],
+      "devops": [
+        "Git",
+        "GitHub",
+        "GitHub Actions",
+        "Docker",
+        "AWS",
+        "Cloudflare Workers",
+        "Linux"
+      ]
+    },
+    "Competetive programming": [
+      "Knight on LeetCode ",
+      "Specialist on Codeforces"
+    ]
+  }
+}
