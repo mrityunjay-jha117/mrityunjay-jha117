@@ -1,1 +1,0 @@
-Successfully updated details.json with fetched stats!
