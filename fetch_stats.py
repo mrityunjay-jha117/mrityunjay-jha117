@@ -73,7 +73,7 @@ def fetch_github_stats(token, username):
             repo_url = repo.get('url')
             
             # Inject token to clone without hanging/prompting for passwords
-            clone_url = repo_url.replace("https://github.com", f"https://x-access-token:{token}@github.com")
+            clone_url = repo_url.replace("https://github.com/", f"https://{token}@github.com/")
             repo_dir = os.path.join(tmpdir, repo_name)
             
             try:
