@@ -3,6 +3,8 @@ import sys
 import json
 import urllib.request
 import urllib.error
+import subprocess
+import tempfile
 
 def fetch_github_stats(token, username):
     url = "https://api.github.com/graphql"
