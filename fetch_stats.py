@@ -35,13 +35,8 @@ def fetch_github_stats(token, username):
               edges {
                 size
                 node { name }
-              }
-            }
+            url
           }
-        }
-        contributionsCollection {
-          totalCommitContributions
-          restrictedContributionsCount
         }
       }
     }
@@ -59,70 +54,69 @@ def fetch_github_stats(token, username):
 
     user_data = result.get('data', {}).get('user', {})
     if not user_data:
-        print("Could not fetch user data.")
         return None
 
     followers = user_data.get('followers', {}).get('totalCount', 0)
-    repos_count = user_data.get('repositories', {}).get('totalCount', 0)
+    total_repos = user_data.get('repositories', {}).get('totalCount', 0)
+    repos_nodes = user_data.get('repositories', {}).get('nodes', [])
     
     total_stars = 0
-    total_commits = user_data.get('contributionsCollection', {}).get('totalCommitContributions', 0)
-    
-    import time
-    
     total_additions = 0
     total_removals = 0
+    total_commits = 0
     
-    rest_headers = {
-        "Authorization": f"Bearer {token}",
-        "Accept": "application/vnd.github.v3+json"
-    }
-
-    repos_nodes = user_data.get('repositories', {}).get('nodes', [])
-    for repo in repos_nodes:
-        total_stars += repo.get('stargazers', {}).get('totalCount', 0)
-        repo_name = repo.get('name')
-        
-        # Hit the contributors stats API
-        stats_url = f"https://api.github.com/repos/{username}/{repo_name}/stats/contributors"
-        req = urllib.request.Request(stats_url, headers=rest_headers)
-        
-        max_retries = 3
-        for attempt in range(max_retries):
+    # Bypass GitHub cache by cloning repos and parsing git logs directly!
+    with tempfile.TemporaryDirectory() as tmpdir:
+        for repo in repos_nodes:
+            repo_name = repo.get('name')
+            total_stars += repo.get('stargazers', {}).get('totalCount', 0)
+            repo_url = repo.get('url')
+            
+            # Inject token to clone without hanging/prompting for passwords
+            clone_url = repo_url.replace("https://github.com", f"https://x-access-token:{token}@github.com")
+            repo_dir = os.path.join(tmpdir, repo_name)
+            
             try:
-                with urllib.request.urlopen(req) as response:
-                    status_code = response.getcode()
-                    if status_code == 202:
-                        time.sleep(2)
-                        continue
-                    elif status_code == 200:
-                        stats_data = json.loads(response.read().decode())
-                        if isinstance(stats_data, list):
-                            for contributor in stats_data:
-                                author = contributor.get('author')
-                                if author and author.get('login', '').lower() == username.lower():
-                                    for week in contributor.get('weeks', []):
-                                        total_additions += week.get('a', 0)
-                                        total_removals += week.get('d', 0)
-                        break
-                    else:
-                        break
-            except urllib.error.URLError as e:
-                print(f"Error fetching stats for {repo_name}: {e}")
-                break
+                # Fast bare clone
+                subprocess.run(
+                    ["git", "clone", "--bare", "--filter=blob:none", clone_url, repo_dir],
+                    check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                )
+                
+                # We count all commits globally matching user's names
+                cmd_commits = ["git", "-C", repo_dir, "rev-list", "--count", "--no-merges", f"--author={username}", "HEAD"]
+                try:
+                    out = subprocess.check_output(cmd_commits, stderr=subprocess.DEVNULL).decode().strip()
+                    if out:
+                        total_commits += int(out)
+                except:
+                    pass
+                
+                # Fetch exact additions and removals
+                cmd_stat = ["git", "-C", repo_dir, "log", f"--author={username}", "--numstat", "--pretty=format:", "--no-merges", "HEAD"]
+                try:
+                    out = subprocess.check_output(cmd_stat, stderr=subprocess.DEVNULL).decode()
+                    for line in out.splitlines():
+                        parts = line.strip().split()
+                        if len(parts) == 3:
+                            adds, dels = parts[0], parts[1]
+                            if adds.isdigit(): total_additions += int(adds)
+                            if dels.isdigit(): total_removals += int(dels)
+                except:
+                    pass
+            except:
+                continue
 
     total_loc = total_additions - total_removals
-    if total_loc < 0:
-        total_loc = 0
 
     return {
-        "followers": followers,
+        "repos": total_repos,
         "stars": total_stars,
-        "repos": repos_count,
+        "followers": followers,
         "commits": total_commits,
-        "loc": total_loc,
         "additions": total_additions,
-        "removals": total_removals
+        "removals": total_removals,
+        "loc": total_loc
     }
 
 def main():
@@ -130,26 +124,24 @@ def main():
     if not token:
         print("GH_TOKEN environment variable not set! Leaving current stats in details.json untouched.")
         return
-    else:
-        with open("details.json", "r") as f:
-            data = json.load(f)
-        username = data["resume_details"]["github_stats"]["username"]
-        stats = fetch_github_stats(token, username)
-        if not stats:
-            sys.exit(1)
 
-    # Update details.json
     with open("details.json", "r") as f:
         data = json.load(f)
+    username = data["resume_details"]["github_stats"]["username"]
     
+    stats = fetch_github_stats(token, username)
+    if not stats:
+        print("Failed to fetch GitHub stats.")
+        sys.exit(1)
+
     gh_stats = data["resume_details"]["github_stats"]
-    gh_stats["followers"] = stats["followers"]
-    gh_stats["stars"] = stats["stars"]
     gh_stats["repos"] = stats["repos"]
     gh_stats["commits"] = stats["commits"]
-    gh_stats["loc"] = f"{stats['loc']:,}"
     gh_stats["additions"] = f"{stats['additions']:,}"
     gh_stats["removals"] = f"{stats['removals']:,}"
+    gh_stats["loc"] = f"{stats['loc']:,}"
+    gh_stats["stars"] = stats["stars"]
+    gh_stats["followers"] = stats["followers"]
 
     with open("details.json", "w") as f:
         json.dump(data, f, indent=2)
