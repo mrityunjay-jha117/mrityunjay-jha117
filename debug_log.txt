@@ -1,14 +1,8 @@
-GraphQL returned empty user data: {
-  "errors": [
-    {
-      "message": "Expected NAME, actual: (none) (\"\") at [27, 5]",
-      "locations": [
-        {
-          "line": 27,
-          "column": 5
-        }
-      ]
-    }
-  ]
-}
-Failed to fetch GitHub stats.
+Traceback (most recent call last):
+  File "/home/runner/work/mrityunjay-jha117/mrityunjay-jha117/fetch_stats.py", line 142, in <module>
+    main()
+  File "/home/runner/work/mrityunjay-jha117/mrityunjay-jha117/fetch_stats.py", line 122, in main
+    stats = fetch_github_stats(token, username)
+  File "/home/runner/work/mrityunjay-jha117/mrityunjay-jha117/fetch_stats.py", line 57, in fetch_github_stats
+    with tempfile.TemporaryDirectory() as tmpdir:
+NameError: name 'tempfile' is not defined. Did you mean: 'compile'?
