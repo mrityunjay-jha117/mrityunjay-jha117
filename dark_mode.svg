@@ -106,7 +106,7 @@
         <text x="15" y="211" class="subtitle">GitHub Statistics</text>
         <text x="15" y="238" class="text"><tspan class="label">Repositories:</tspan> <tspan class="stat-val">16</tspan></text>
         <text x="220" y="238" class="text"><tspan class="label">Stars:</tspan> <tspan class="stat-val">0</tspan></text>
-        <text x="420" y="238" class="text"><tspan class="label">Followers:</tspan> <tspan class="stat-val">1</tspan></text>
+        <text x="420" y="238" class="text"><tspan class="label">Followers:</tspan> <tspan class="stat-val">2</tspan></text>
         <text x="15" y="266" class="text"><tspan class="label">Commits:</tspan> <tspan class="stat-val">782</tspan></text>
         <text x="220" y="266" class="text"><tspan class="label">Lines of Code:</tspan> <tspan class="stat-val">289,738</tspan></text>
         <text x="420" y="266" class="text"><tspan class="additions">++365,126</tspan> <tspan class="removals">--75,388</tspan></text>
